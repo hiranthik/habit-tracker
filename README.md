@@ -1,4 +1,4 @@
-# Habit-Tracker app 👋
+# Habit-Tracker App 👋
 
 The Habit Tracker App is a mobile application built with React Native and Expo, designed to help users track daily habits, set goals, and maintain consistency. The app provides a clean and intuitive interface, ensuring users can easily manage habits and monitor progress.
 
