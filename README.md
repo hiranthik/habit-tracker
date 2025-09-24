@@ -1,50 +1,35 @@
-# Welcome to your Expo app 👋
+# Habit-Tracker app 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The Habit Tracker App is a mobile application built with React Native and Expo, designed to help users track daily habits, set goals, and maintain consistency. The app provides a clean and intuitive interface, ensuring users can easily manage habits and monitor progress.
 
-## Get started
+## Table of Contents
 
-1. Install dependencies
+1. Features
 
-   ```bash
-   npm install
-   ```
+2. Technologies
 
-2. Start the app
+3. Installation
 
-   ```bash
-   npx expo start
-   ```
+4. Project Structure
 
-In the output, you'll find options to open the app in a
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Features
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+The Welcome Page is the first screen users see when opening the app. It introduces the app and guides users to sign up or log in.
 
-## Get a fresh project
+#### Implementation Details:
 
-When you're ready, run:
+- Built with React Native and styled for a clean, responsive layout.
 
-```bash
-npm run reset-project
-```
+- Navigation handled via Expo Router:
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+   - <Stack> manages screen transitions.
 
-## Learn more
+   - useRouter() handles programmatic navigation to authentication screens.
 
-To learn more about developing your project with Expo, look at the following resources:
+   - Expo Router simplifies routing by using a file-based structure, making it easy to organize screens and manage authentication flows.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- Ensures a smooth entry point for new users, providing a friendly onboarding experience.
+  
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+  <img width="1206" height="2622" alt="Simulator Screenshot - iPhone 17 Pro - 2025-09-24 at 11 53 20" src="https://github.com/user-attachments/assets/79adb5be-3d22-47a8-b445-9da875a260f0" />
