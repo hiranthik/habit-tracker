@@ -1,6 +1,6 @@
 import {Client, Account, Databases} from 'react-native-appwrite';
 
-const client = new Client();
+export const client = new Client();
 client.setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!)
 .setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!)
 
@@ -11,3 +11,9 @@ export const databases = new Databases(client);
 
 export const DATABASE_ID= process.env.EXPO_PUBLIC_DB_ID!;
 export const HABITS_COLLECTION_ID= process.env.EXPO_PUBLIC_HABITS_COLLECTION_ID!;
+
+export interface RealTimeResponse{
+    events:string[];
+    payload:any;
+
+}
