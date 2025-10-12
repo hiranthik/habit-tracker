@@ -3,9 +3,9 @@ import { Button, Surface, Text } from "react-native-paper";
 import { Link } from "expo-router";
 import { StyleSheet } from 'react-native';
 import { useAuth } from "@/lib/auth-context";
-import { client,DATABASE_ID, databases, HABITS_COLLECTION_ID, RealTimeResponse } from "@/lib/appwrite";
-import { Query } from "react-native-appwrite";
-import { Habit } from "@/types/database.type";
+import { client,COMPLETIONS_COLLECTION_ID,DATABASE_ID, databases, HABITS_COLLECTION_ID, RealTimeResponse } from "@/lib/appwrite";
+import { ID, Query } from "react-native-appwrite";
+import { Habit, HabitCompletion } from "@/types/database.type";
 import { useEffect, useRef, useState } from "react";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { ScrollView, Swipeable } from "react-native-gesture-handler";
@@ -15,7 +15,7 @@ export default function Index() {
   const {signOut,user}= useAuth();
 
   const [habits,setHabits] = useState<Habit[]>([])
-
+  const [completedHabits,setCompletedHabits] = useState<string[]>()
   const swipeableRefs = useRef<{[key:string]:Swipeable|null}>({});
 
   useEffect(()=>{
@@ -36,7 +36,10 @@ export default function Index() {
         fetchHabits();
       }
     }
-    ); fetchHabits();
+    ); 
+    
+    fetchHabits();
+    fetchTodayCompletions();
     return () =>{
       habitSubscription();
     };
@@ -58,7 +61,65 @@ export default function Index() {
     }
   }
 
-  
+
+  const fetchTodayCompletions = async() =>{
+    try{
+      const today = new Date()
+      today.setHours(0,0,0,0)
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        COMPLETIONS_COLLECTION_ID,
+        [Query.equal("user_id",user?.$id??""),Query.greaterThanEqual("completed_at",today.toISOString())]
+      );
+      console.log(response.documents)
+
+      const completions = response.documents as unknown as HabitCompletion[]
+      setCompletedHabits(completions.map((c)=> c.habit_id));
+    }
+    catch(error){
+      console.log(error)
+    }
+  }
+
+
+
+  const handleDeleteHabit = async(id:string) =>{
+    try{
+      await databases.deleteDocument(DATABASE_ID,HABITS_COLLECTION_ID,id)
+    }
+    catch(error){
+      console.log(error)
+    }
+  }
+
+   const handleCompleteHabit = async(id:string) =>{
+    if(!user ||completedHabits?.includes(id)) return;
+    try{
+
+      const currentDate = new Date().toISOString()
+      await databases.createDocument(DATABASE_ID,COMPLETIONS_COLLECTION_ID,ID.unique(),{
+        habit_id:id,
+        user_id:user.$id,
+        completed_at:new Date().toISOString()
+      }
+    
+    );
+
+    const habit = habits?.find((h)=>h.$id===id)
+    if(!habit) return;
+
+    await databases.updateDocument(DATABASE_ID,HABITS_COLLECTION_ID,id,{
+      streak_count:habit.streak_count +1,
+      last_completed:currentDate
+    })
+
+
+    }
+    catch(error){
+      console.log(error)
+    }
+  }
+
 
   const renderRightActions= () => (
     <View style={styles.swipeActionRight}>
@@ -98,6 +159,14 @@ export default function Index() {
        overshootRight={false}
        renderLeftActions={renderLeftActions}
        renderRightActions={renderRightActions}
+       onSwipeableOpen={(direction)=>{
+        if(direction ==="left"){
+          handleDeleteHabit(habit.$id);
+        } else if(direction === "right"){
+          handleCompleteHabit(habit.$id);
+        }
+        swipeableRefs.current[habit.$id]?.close();
+       }}
        
        >
         <Surface key={key} style={styles.card} elevation={0}>
