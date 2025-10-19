@@ -41,6 +41,9 @@ The Habit Tracker App is a mobile application built with React Native and Expo, 
 
 - Streaks Page – tracks habit streaks and progress over time.
 
+  <img width="1206" height="2622" alt="Simulator Screenshot - iPhone 17 Pro - 2025-10-18 at 20 33 59" src="https://github.com/user-attachments/assets/50366d5e-ab39-4cd8-92c0-3314e677aba9" />
+
+
 - Add Habits Page – lets users create new habits and adjust the frequencies they want to follow.
 
   
