@@ -1,9 +1,11 @@
-import { COMPLETIONS_COLLECTION_ID, DATABASE_ID, databases, HABITS_COLLECTION_ID } from "@/lib/appwrite";
+import { client, COMPLETIONS_COLLECTION_ID, DATABASE_ID, databases, HABITS_COLLECTION_ID, RealTimeResponse } from "@/lib/appwrite";
 import { useAuth } from "@/lib/auth-context";
 import { Habit, HabitCompletion } from "@/types/database.type";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Query } from "react-native-appwrite";
+import { ScrollView } from "react-native-gesture-handler";
 import { Card, Text } from "react-native-paper";
 
 export default function StreaksScreen() {
@@ -13,9 +15,45 @@ export default function StreaksScreen() {
 
   useEffect(()=>{
     if(user){
+
+      const habitsChannel = `databases.${DATABASE_ID}.collections.${HABITS_COLLECTION_ID}.documents`
+          const habitSubscription = client.subscribe(habitsChannel,
+            (response:RealTimeResponse)=>{
+              if(response.events.includes("databases.*.collections.*.documents.*.create"))
+            {
+              fetchHabits();
+            }
+          else if(response.events.includes("databases.*.collections.*.documents.*.update"))
+            {
+              fetchHabits();
+            }
+          else if(response.events.includes("databases.*.collections.*.documents.*.delete"))
+            {
+              fetchHabits();
+            }
+          }
+          ); 
+      
+          const completionsChannel = `databases.${DATABASE_ID}.collections.${COMPLETIONS_COLLECTION_ID}.documents`
+          const completionsSubscription = client.subscribe(completionsChannel,
+            (response:RealTimeResponse)=>{
+              if(response.events.includes("databases.*.collections.*.documents.*.create"))
+            {
+              fetchCompletions();
+            }
+          
+          }
+          ); 
+      
      
     fetchHabits();
     fetchCompletions();
+
+    return () =>{
+      habitSubscription();
+      completionsSubscription();
+      
+    }
   
   }
   },[user])
@@ -90,10 +128,11 @@ export default function StreaksScreen() {
         }
       }
         else{
-          if(currentStreak > bestStreak) bestStreak = currentStreak;
+          currentStreak = 1;
+        }
+         if(currentStreak > bestStreak) bestStreak = currentStreak;
           streak = currentStreak;
           lastDate = date;
-        }
       }
 
     )
@@ -106,45 +145,76 @@ export default function StreaksScreen() {
     return {habit,bestStreak,streak,total};
   });
 
-  const rankedHabits = habitStreaks.sort((a,b) => a.bestStreak - b.bestStreak)
+  const rankedHabits = habitStreaks.sort((a,b) => b.bestStreak - a.bestStreak)
   
 
 
 
-
+  const badgeStyles = [styles.badge1,styles.badge2, styles.badge3 ]
 
 
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Habit Streaks</Text>
+      <Text style={styles.title} variant="headlineSmall">Habit Streaks</Text>
+
+      {rankedHabits.length >0 && (
+        <View style={styles.rankingContainer}>
+          <Text style={styles.rankingTitle}>
+            <MaterialCommunityIcons name="medal" size={18} color='#FFD700'/> {" "}
+            Top Streaks
+          </Text>
+
+          {rankedHabits.slice(0,3).map((item,key)=>(
+            <View key={key} style={styles.rankingRow}> 
+              <View style={[styles.rankingBadge, badgeStyles[key]]}>
+                <Text style={styles.rankingBadgeText}> {key +1 } </Text>
+              </View>
+              <Text style={styles.rankingHabit}>{item.habit.title}</Text> 
+              <Text>{"  "}</Text>
+               <Text style={styles.rankingStreak}>{item.bestStreak}</Text>
+            </View>
+          ))}
+
+        </View>
+      )}
+
+
       {habits.length === 0 ? (
         <View> 
         <Text> No habits yet. Add your first habit.</Text>
         </View>
       ): (
-        rankedHabits.map(({habit,streak,bestStreak,total},key)=>(
+        <ScrollView showsVerticalScrollIndicator={false}>
+        {rankedHabits.map(({habit,streak,bestStreak,total},key)=>(
           <Card key={key} style={[styles.card,key ===0 && styles.firstCard]}>
             <Card.Content >
               <Text variant ="titleMedium">{habit.title}</Text>
               <Text style={styles.habitDescription}>{habit.description}</Text>
               <View style={styles.statsRow}>
                 <View style={styles.statsBadge}>
-                  <Text style={styles.statsBadgeText}> 🔥 {streak}</Text>
-                   <Text style={styles.statsLabel}> Current</Text>
+                   <Text style={styles.statsLabel}> Current :     
+                    <MaterialCommunityIcons name="fire" size={18} color='#ff9800'/>
+                     </Text>
+                   <Text style={styles.statsBadgeText}> {streak}  </Text>
                 </View>
+
                 <View style={styles.statsBadgeGold}>
-                  <Text style={styles.statsBadgeText}> 🏆 {bestStreak}</Text>
-                   <Text style={styles.statsLabel}> Best</Text>
+                   <Text style={styles.statsLabel}> Best :   
+                    <MaterialCommunityIcons name="trophy-variant" size={18} color='#f1ab43ff'/>
+                   </Text>
+                   <Text style={styles.statsBadgeText}> {bestStreak}</Text>
                 </View>
                 <View style={styles.statsBadgeGreen}>
-                  <Text style={styles.statsBadgeText}> ✅ {total}</Text>
-                   <Text style={styles.statsLabel}> Total </Text>
+                   <Text style={styles.statsLabel}> Total :   
+                    <MaterialCommunityIcons name="check-bold" size={18} color='#32CD32'/> </Text>
+                   <Text style={styles.statsBadgeText}> {total}</Text>
                 </View>
               </View>
             </Card.Content>
           </Card>
-        ))
+        ))}
+        </ScrollView>
       )}
     </View>
   );
@@ -155,20 +225,156 @@ const styles = StyleSheet.create({
   card:{
     marginBottom:18,
     borderRadius:18,
-    backgroundColor:"#7BAFD4"
+    backgroundColor:"#B9D9EB",
+    elevation:3,
+    shadowColor:"#003262",
+    shadowOffset:{width:0,height:2},
+    shadowOpacity:1,
+    borderColor:"#f0f0f0"
     
 
   },
+
+  firstCard:{
+    borderWidth:1,
+    borderColor:"#f0f0f0"
+  },
+
   
   container:{
     flex:1,
-    backgroundColor:"#2774AE",
+    backgroundColor:"#7BAFD4",
     padding:16
   },
   
   
   title:{
-    fontWeight:"100"
+    fontWeight:"500",
+    marginBottom:7,
+    alignSelf:"center",
+    color:"#003262"
   },
+
+  habitTitle:{
+    fontWeight:"bold",
+    fontSize:18,
+    marginBottom:2
+  },
+
+  habitDescription:{
+    marginBottom:10,
+    color:"#536878"
+
+  },
+
+  statsRow:{
+    flexDirection:"row",
+    justifyContent:"space-between",
+    marginBottom:8,
+    
+  },
+  statsBadge:{
+    backgroundColor:"#76ABDF",
+    borderRadius:10,
+    paddingHorizontal:12,
+    paddingVertical:6,
+    alignItems:"center",
+    minWidth:60
+  },
+
+  statsBadgeGold:{
+    backgroundColor:"#76ABDF",
+    borderRadius:10,
+    paddingHorizontal:12,
+    paddingVertical:6,
+    alignItems:"center",
+    minWidth:60
+  },
+
+   statsBadgeGreen:{
+    backgroundColor:"#76ABDF",
+    borderRadius:10,
+    paddingHorizontal:12,
+    paddingVertical:6,
+    alignItems:"center",
+    minWidth:60
+  },
+  statsBadgeText:{
+    fontWeight:"bold",
+    fontSize:15,
+    color:"#536878"
+  },
+
+  statsLabel:{
+    fontWeight:"500",
+    fontSize:14,
+    marginTop:2
+  },
+
+  rankingContainer:{
+    marginBottom:24,
+    backgroundColor:"#2072AF",
+    borderRadius:16,
+    padding:16,
+    elevation:2,
+    shadowColor:"#003262",
+    shadowOffset:{width:0,height:2},
+    shadowOpacity:1,
+    shadowRadius:1
+    
+  },
+
+  rankingTitle:{
+    fontWeight:"600",
+    fontSize:18,
+    marginBottom:12,
+    color:"#FFFACD",
+    letterSpacing:0.5
+  
+  },
+
+  rankingRow:{
+    flexDirection:"row",
+    alignItems:"center",
+    marginBottom:8,
+    borderBottomWidth:2,
+    borderBottomColor:"#4682b4",
+    paddingBottom:8,
+    
+  },
+
+  rankingBadge:{
+    width:28,
+    height:28,
+    borderRadius:14,
+    alignItems:"center",
+    justifyContent:"center",
+    marginRight:10,
+    backgroundColor:"#4682b4"
+  },
+
+  badge1:{ backgroundColor:"#FFD700"},
+  badge2:{ backgroundColor:"silver"},
+  badge3:{ backgroundColor:"#C19A6B"},
+
+  rankingBadgeText:{
+    fontWeight:"bold",
+    fontSize:15
+
+  },
+
+  rankingHabit:{
+    fontSize:15,
+    flex:1,
+    color:"#002147",
+    fontWeight:"600",
+
+  },
+
+  rankingStreak:{
+    fontSize:14,
+    fontWeight:"bold",
+    color:"#002147"
+  }
 
 });
